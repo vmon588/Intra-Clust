@@ -1,0 +1,120 @@
+Cluster Identification
+======================
+
+Move into the scripts directory and run IntraClust.py as specified below.
+Ex: For an input fasta filename of "test.fasta" in the seqfiles directory, using a patristic distance threshold of 0.03 and a tree support of 0.9:
+python IntraClust.py -i ../seqfiles/test.fasta -a C -t1 0.03 -t2 0.9 -o ../results/clusterResults.txt -path ../Documents/
+Deep sequencing Cluster Identification:
+    Fasta file input
+        1A) Reads must be unique.  Freeware to generate collapsed reads can be found here:
+        FASTQ/A Collapser
+        http://hannonlab.cshl.edu/fastx_toolkit/
+        Enter this file as:
+        -i inputFile.fasta
+        (extensions .fasta, .fas, or .fa are required)
+        2A) The resulting file also has to have a unique identifier in each read that is specific to each sample/individual.
+            You need to enter the length of this identifier and where it starts within the unique identifier for each fasta read.
+            Enter this information as:
+            -idL # -idS #
+            where -idL specifies the length and and -idS specifies the starting location.
+            Ex: all reads for individual A are labelled with A01 identifier
+            >A01.1.1
+            ACGTACGT
+            -idS 1, -idL 3
+        3A) If intrahost sequence data is available (multiple samples collected from the same individual), then needs to be put into 'Intrahost.txt'
+            This file is used to assist the ete.DeepSequencingClusterID.py program, or specifically, to assist in the identification and removal of polyphyletic clusters.
+            The unique identifiers for these samples are also required here (ex UID1, UID2 etc).
+            This simple file format is as follows:
+            UID1,UID2
+            UID3,UID4
+            where UID1 and UID2 are part of a single sequential set, and UID3 / UID4 are part of another.
+        4A) If you prefer to use FastTree for phylogenetic tree reconstruction, you must provide the file pathway to locate FastTree
+            Enter this information as:
+            -p ../Documents/
+            (NOT -p ../Documents/FastTree)
+        
+
+    Newick File Input
+        1B) If a tree is already provided, a fasta file with the same file name other than the file extension, must also be provided in the same directory as the newick file.
+        The fasta file does not need to be specified on the command line.
+        2B) Sections 2A-4A are also required
+        Enter this file as:
+        -i inputFile.newick
+        (extension is required to be either .newick, .tree, .nw, or .nwk)
+    Output
+    	-o specifies the output directory and filename.  
+        Four or five files will be written to this directory: 
+        	(1) the tree if specified (..newick)
+        	(2) the pairwise patristic distances (..IntraGenotype.PatDist.txt)
+        	(3) Patristic distance percentiles (..IntraGenotype.patdistspectrum.txt)
+        	(4) outlier file (..IntraGenotype.Outliers.txt)
+        	(5) Cluster results, which the user specifies (ex -o ../Documents/ClusterOutput.txt)
+      
+For Consensus/Sanger Sequencing:
+    Fasta file input:
+        1C) All sequences must have unique names
+        Enter this file as:
+        -i inputFile.fasta
+        2C) If you prefer to use FastTree for phylogenetic tree reconstruction, you must provide the file pathway to locate FastTree
+                Enter this information as:
+                -p ../Documents/ (always ending in a forward slash)
+    Newick File Input
+        1D) If a tree is already provided, a fasta file with the same file name other than the file extension, must also be provided in the same directory.
+        The fasta file does not need to be specified on the command line.
+        2D) Section 1C is also required
+        Enter this file as:
+        -i inputFile.newick
+    Output
+    	-o specifies the output directory and filename.
+    	Two to Three files will be generated:
+    		(1) the tree if required (..newick)
+    		(2) the pairwise patristic distances (..PatDist.txt)
+    		(3) Cluster results, which the user specifies (ex -o ../Documents/ClusterOutput.txt)
+    		
+        
+        
+To get this information, type:
+python IntraClust.py -h
+
+usage: IntraClust.py [-h] -i infile -t1 threshold -t2 threshold
+                        [-t3 threshold] -a analysis [-path path]
+                        [-idS [start]] [-idL [len]] [-oR [outlier]] -o output
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i infile, --input infile
+                        Input fasta or newick file
+  -t1 threshold, --patristic distance threshold
+                        Patristic Distance (Consensus sequencing (ex
+                        0.03))Percentile (Deep sequencing dataset (ex 25))
+                        Threshold
+  -t2 threshold, --tree support threshold
+                        Tree / Bootstrap support threshold
+  -t3 threshold, --genotype pat dist threshold threshold
+                        Optional: If multiple genotypes are included, this
+                        threshold prevents inter-genotype comparisons (default
+                        is 0.3)
+  -a analysis, --analysis type analysis
+                        Type of analysis: Consensus/Sanger (ex C) or Deep
+                        Sequencing (ex DS)
+  -path path, --pathway path
+                        Optional: Required only when a newick file is needed,
+                        enter the FastTree file pathway (ex: ../Documents/)
+  -idS [start], --idStart [start]
+                        Required for deep seq analysis, specify the starting
+                        position of the uniqe identifier in your reads for
+                        each sample (ex: 1)
+  -idL [len], --idLen [len]
+                        Required for deep seq analysis, specify the length of
+                        the uniqe identifier in your reads for each sample
+                        (ex: 3)
+  -oR [outlier], --outlierRem [outlier]
+                        Required for deep seq analysis if outlier removal is
+                        not needed (ex '-oR F'). Outliers are removed by
+                        default (ex '-oR T' )
+  -o output, --output output
+                        Required: this specifies the output filename location
+
+        
+        
+        

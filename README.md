@@ -1,7 +1,7 @@
 #Intra-Clust
 
 ##Description
-These python scripts are used for identifying phylogenetic clusters through the analysis of intra-host variants derived from deep sequence data.  A Sanger sequencing cluster analysis pipeline is also provided for comparison. Clusters are identified directly from a fasta file or newick phylogenetic tree input.
+These python scripts are used for identifying phylogenetic clusters through the analysis of intra-host variants derived from deep sequencing data.  A Sanger sequencing cluster analysis pipeline is also provided for comparison. Clusters are identified directly from a fasta file or newick phylogenetic tree input.
 For deep sequencing, clusters are identified using patristic distance thresholds determined by the intra-host diversity from each individual's viral population.
 Whereas for Sanger sequencing analyses, clusters are traditionally defined using both patristic distance and tree support thresholds specified by the user.
 After a preliminary run, the output files can be used to help determine which threshold is most appropriate for a given dataset.
