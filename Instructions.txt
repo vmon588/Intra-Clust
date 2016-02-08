@@ -16,12 +16,12 @@ Deep sequencing Cluster Identification:
             You need to enter the length of this identifier and where it starts within the unique identifier for each fasta read.
             Enter this information as:
             -idL # -idS #
-            where -idL specifies the length and and -idS specifies the starting location.
+            where -idL specifies the length and -idS specifies the starting location.
             Ex: all reads for individual A are labelled with A01 identifier
             >A01.1.1
             ACGTACGT
             -idS 1, -idL 3
-        3A) If intrahost sequence data is available (multiple samples collected from the same individual), then needs to be put into 'Intrahost.txt'
+        3A) If intrahost sequence data is available (multiple samples collected from the same individual), then this needs to be put into 'Intrahost.txt'
             This file is used to assist the ete.DeepSequencingClusterID.py program, or specifically, to assist in the identification and removal of polyphyletic clusters.
             The unique identifiers for these samples are also required here (ex UID1, UID2 etc).
             This simple file format is as follows:
