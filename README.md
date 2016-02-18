@@ -11,9 +11,6 @@ This allows species with different mutation rates to be analyzed accordingly. Th
 This package was implemented in python 2.7 and 2.6. For python version incompatibilities, please contact me.
 Python packages required:
 
-argparse
-https://pypi.python.org/pypi/argparse
-
 numpy
 http://www.scipy.org/scipylib/download.html
 
