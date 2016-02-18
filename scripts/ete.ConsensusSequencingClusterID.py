@@ -4,38 +4,7 @@ import dendropy
 from dendropy.calculate import treemeasure
 import sys
 import itertools
-
-#Ensure all of the required components were retrieved prior to running program
-try:
-    TreeFile = sys.argv[1]
-    cutoff = sys.argv[2]
-    cutoff = float(str(cutoff).replace("'","").replace('"',""))
-    support = sys.argv[3]
-    output = sys.argv[4]
-    support = support.upper()
-    support = str(support).replace("'","").replace('"',"")
-    TreeShort = str(TreeFile).rsplit(".", 1)[0]
-    if "/" in str(TreeFile):
-        TreeFile = str(TreeFile).rsplit("/", 1)[1]
-        filePath = str(sys.argv[1]).rsplit("/",1)[0]+"/"
-    else:
-        TreeFile = str(TreeFile)
-        filePath = ""
-    TreeShort = TreeFile.rsplit(".", 1)[0]
-    if "/" in output:
-        outputFile = output.rsplit("/", 1)[1]
-        outputPath = output.rsplit("/",1)[0]+"/"
-    else:
-        outputFile = output
-        outputPath = ""
-    
-except IndexError:
-    print "Usage: python ete.ConsensusSequencingClusterIDFin5.py newickFile PDThreshold TSThreshold output"
-    print "newickFile: any newick tree file"
-    print "PDThreshold: Patristic Distance Threshold: ex '0.03', default '0.3'"
-    print "TSThreshold: Bootstrap / Tree Support Threshold: ex '0.95' or 'pass' if you want to identify your own"
-    print "Output: output filename and location"
-    sys.exit(1)
+import os
 
 class SangerTreeParsing(object):
     def __init__(self):
@@ -71,7 +40,7 @@ class SangerTreeParsing(object):
     def TreeParsePatDistSupport(self,newickFile,cutoff,support):
         tree = dendropy.Tree.get_from_path(newickFile, "newick")
         pdm = treemeasure.PatristicDistanceMatrix(tree)
-        pdfile = open(filePath+TreeShort+"."+str(cutoff)+"."+str(support)+".patdist.txt",'w')
+        pdfile = open(outputPath+TreeShort+"."+str(cutoff)+"."+str(support)+".patdist.txt",'w')
         PatDist = []
         suppress_internal_node_taxa=True
         for i, t1 in enumerate(tree.taxon_namespace):
@@ -261,13 +230,54 @@ class SangerTreeParsing(object):
                             if not cluster2 in self.monoPairs:
                                 self.monoPairs.append(cluster2)
         return self.monoPairs
+#Ensure all of the required files and settings were input correctly
+try:
+    TreeFile = sys.argv[1]
+    cutoff = sys.argv[2]
+    cutoff = float(str(cutoff).replace("'","").replace('"',""))
+    support = sys.argv[3]
+    output = sys.argv[4]
+    support = support.upper()
+    support = str(support).replace("'","").replace('"',"")
+    
+    
+except IndexError:
+    print "Usage: python ete.ConsensusSequencingClusterIDFin5.py newickFile PDThreshold TSThreshold output"
+    print "newickFile: any newick tree file"
+    print "PDThreshold: Patristic Distance Threshold: ex '0.03', default '0.3'"
+    print "TSThreshold: Bootstrap / Tree Support Threshold: ex '0.95' or 'pass' if you want to identify your own"
+    print "Output: output filename and location"
+    sys.exit(1)
+    
+    
+if "/" in output:
+    outputPath = str(sys.argv[4]).rsplit("/",1)[0]+"/"
+else:
+    outputPath = ""
+if "/" in str(TreeFile):
+    filePath = str(sys.argv[1]).rsplit("/",1)[0]+"/"
+    TreeShort = str(sys.argv[1]).rsplit("/",1)[1]
+else:
+    filePath = ""
+    TreeShort = str(TreeFile).rsplit(".", 1)[0]
+if os.path.isfile(TreeFile):
+    TreeFile = TreeFile
+    filePath = ""
+elif os.path.isfile(filePath+TreeFile):
+    TreeFile = filePath+TreeFile  
+elif os.path.isfile(outputPath+TreeFile):
+    TreeFile = outputPath+TreeFile
+else:
+    print "WARNING: Input tree file could be located..."
+    sys.exit(1)
 
 if __name__ == '__main__':
     Cluster1 = SangerTreeParsing()
+    
     if support != "PASS":
-        PD = Cluster1.TreeParsePatDistSupport(outputPath+TreeFile,cutoff,support)
+        PD = Cluster1.TreeParsePatDistSupport(TreeFile,cutoff,support)
     else:
-        PD = Cluster1.TreeParsePatDist(outputPath+TreeFile,cutoff)
+        PD = Cluster1.TreeParsePatDist(TreeFile,cutoff)
     
     Cluster2 = Cluster1.Cluster(PD)
     Cluster3 = Cluster1.CheckMonophyly(Cluster2)

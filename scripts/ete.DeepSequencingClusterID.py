@@ -3,30 +3,7 @@ import itertools
 from ete2 import Tree
 import dendropy
 from dendropy.calculate import treemeasure
-
-
-Spectrum = sys.argv[1]
-PatDistOutput = sys.argv[2]
-percentile = sys.argv[3]
-supportInput = sys.argv[4].upper()
-IntraFile = sys.argv[5]
-FastaFile = sys.argv[6]
-TreeFile = sys.argv[7]
-idLen = int(sys.argv[8])
-idStart = int(sys.argv[9])-1
-outlierFlag = sys.argv[10].upper()
-output = sys.argv[11]
-if "/" in output:
-    outputPath = str(sys.argv[11]).rsplit("/",1)[0]+"/"
-else:
-    outputPath = ""
-if "/" in str(FastaFile):
-    FastaFile = str(FastaFile).rsplit("/", 1)[1]
-    filePath = str(sys.argv[6]).rsplit("/",1)[0]+"/"
-else:
-    FastaFile = str(FastaFile)
-    filePath = ""
-FastaShort = FastaFile.rsplit(".", 1)[0]
+import os
 
 class ClusterIdentification(object):
     
@@ -191,6 +168,7 @@ class ClusterIdentification(object):
                                 if i != item:
                                     if not item in self.SerialNodes[i]:
                                         self.SerialNodes[i].append(item)
+        
         return self.SerialNodes
     
     #First step of merging overlapping pairs of connected samples
@@ -320,10 +298,12 @@ class ClusterIdentification(object):
         monoFinal = {}
         self.variantCollection()
         if outlierFlag == "TRUE":
-                OutlierFile = open(outputPath+FastaShort+"."+percentile+"."+supportInput+".Outlier.txt",'w')
-                
-        self.intraComb(IntraFile)
-        
+                OutlierFile = open(outputPath+TreeShort+"."+percentile+"."+supportInput+".Outlier.txt",'w')
+            
+        try:
+            self.intraComb(IntraFile)
+        except:
+            pass
         Rejects = []
         
         for k,v in self.dictSharedReads.iteritems():
@@ -416,11 +396,54 @@ class ClusterIdentification(object):
                 node1 = isp[0]
                 node2 = isp[1].split("\t")[0]
                 ClusterKeys = self.ClusterKeys(values,node1,node2)
-        FinalClustering = self.ClusterKeys2(ClusterKeys)
+        try:
+            FinalClustering = self.ClusterKeys2(ClusterKeys)
+        except:
+            print "WARNING: Patristic Distance Data files may be empty..."
+            sys.exit(1)
         for k,v in monoFinal.iteritems():
             print k +"\t"+str(v)
         print "Clusters that are polyphyletic: "+str(Rejects)
         return FinalClustering
+
+#Organizes filepathways and ensures files can be located
+Spectrum = sys.argv[1]
+PatDistOutput = sys.argv[2]
+percentile = sys.argv[3]
+supportInput = sys.argv[4].upper()
+IntraFile = sys.argv[5]
+TreeFile = sys.argv[6]
+idLen = int(sys.argv[7])
+idStart = int(sys.argv[8])-1
+outlierFlag = sys.argv[9].upper()
+output = sys.argv[10]
+
+if "/" in output:
+    outputPath = str(sys.argv[10]).rsplit("/",1)[0]+"/"
+else:
+    outputPath = ""
+if "/" in str(TreeFile):
+    filePath = str(sys.argv[6]).rsplit("/",1)[0]+"/"
+    TreeShort = str(sys.argv[6]).rsplit("/",1)[1]
+else:
+    filePath = ""
+    TreeShort = str(TreeFile).rsplit(".", 1)[0]
+if os.path.isfile(TreeFile):
+    TreeFile = TreeFile
+    filePath = str(sys.argv[6]).rsplit("/",1)[0]+"/"
+elif os.path.isfile(filePath+TreeShort):
+    TreeFile = filePath+TreeShort  
+elif os.path.isfile(outputPath+TreeShort):
+    TreeFile = outputPath+TreeShort
+else:
+    print "WARNING: Input tree file could not be located..."
+    sys.exit(1)
+
+if IntraFile != 'False':
+    if not os.path.isfile(IntraFile):
+        
+        print "WARNING: Intrahost data could not be located..."
+        sys.exit(1)
     
 if __name__ == '__main__':  
     

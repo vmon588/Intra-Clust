@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+##This is the wrapper for the Intra-Clust analysis pipeline
 from argparse import ArgumentParser
 import sys
 import subprocess as sp
@@ -10,9 +10,7 @@ import datetime
 current = datetime.datetime.now()
 TimeStamp = current.strftime("%Y-%m-%d-%H.%M")
 
-flag = 0
-
-
+#Parse command line arguments
 parser = ArgumentParser()
 
 parser.add_argument("-i", "--input", dest="infile",required=True,
@@ -26,7 +24,7 @@ parser.add_argument("-t3", "--genotype pat dist threshold", dest="genotype", def
                     help="Optional: If multiple genotypes are included, this threshold prevents inter-genotype comparisons (default is 0.3)", metavar="threshold")
 parser.add_argument("-a", "--analysis type", dest="analysis", default=True,required=True,
                     help="Type of analysis: Consensus/Sanger (ex C) or Deep Sequencing (ex DS)", metavar="analysis")
-parser.add_argument("-path", "--pathway", dest="pathway", default=True,
+parser.add_argument("-path", "--pathway", dest="pathway", default=False,
                     help="Optional: Required only when a newick file is needed, enter the FastTree file pathway (ex: ../Documents/)", metavar="path")
 parser.add_argument("-idS", "--idStart", dest="start", default=True,nargs='?', type= int,
                     help="Required for deep seq analysis, specify the starting position of the uniqe identifier in your reads for each sample (ex: 1)", metavar="start")
@@ -36,10 +34,11 @@ parser.add_argument("-oR", "--outlierRem", dest="outlier", default=True,nargs='?
                     help="Required for deep seq analysis if outlier removal is not needed (ex '-oR F'). Outliers are removed by default (ex '-oR T' ) ", metavar="outlier")
 parser.add_argument("-o", "--output", dest="output", required = True,
                     help="Required: this specifies the output filename location", metavar="output")
-
-
+parser.add_argument("-intra", "--intrahostInfo", dest="intra", default=False,nargs='?',type = str,
+                    help="Optional for deep seq analysis if Intrahost information is available (ex '-intra FILENAME') ", metavar="intra")
 args = parser.parse_args()
 
+#Commands to run
 def run_FastTree(path, infile,outfile):
     cmd = "%sFastTree -gtr -nt %s >%s" % (FastTreePathway, args.infile,outputPath+inputfilePrefix+".newick")
     print "Running the following command:\n"+ cmd
@@ -53,18 +52,25 @@ def run_ConsensusClusterIdentifier(i):
     os.system(cmd)
     return
 def run_PatDistSpectrum(i):
-    cmd = "python PatDistSpectrum.py %s %s %s %s %s" % ( output, outputPath+TreeFile, genotypeCutoff, idLen, idStart )
+    cmd = "python PatDistSpectrum.py %s %s %s %s %s" % ( TreeFile, genotypeCutoff, idLen, idStart, output )
     print "Running the following command:\n"+ cmd
     logfile.write("Running the following command:\n"+ cmd+"\n")
     os.system(cmd)
     return
 def run_ETE(Spectrum):
-    cmd = "python ete.DeepSequencingClusterID.py %s %s %s %s %s %s %s %s %s %s %s" % (outputPath+Spectrum, outputPath+PatDistOutput, PatDistCutoff, TreeSupport, filePath+IntraFile, filePath+FastaFile, outputPath+TreeFile, idLen, idStart, outlierFlag, output)
+    cmd = "python ete.DeepSequencingClusterID.py %s %s %s %s %s %s %s %s %s %s" % (outputPath+Spectrum, outputPath+PatDistOutput, PatDistCutoff, TreeSupport, IntraFile, filePath+TreeFile, idLen, idStart, outlierFlag, output)
     print "Running the following command:\n"+ cmd
     logfile.write("Running the following command:\n"+ cmd+"\n")
     os.system(cmd)
     return
+def moveTree(tree):
+    cmd = "cp %s %s" % (args.infile, outputPath)
+    logfile.write("Moved tree into results file:\n"+ cmd+"\n")
+    os.system(cmd)
+    return
 
+#Organize pathways and ensure files can be located
+flag = 0
 if "/" in str(args.infile):
     inputfile = str(args.infile).rsplit("/",1)[1]
     filePath = str(args.infile).rsplit("/",1)[0]+"/"
@@ -76,7 +82,6 @@ if "/" in str(args.output):
     outputPath = str(args.output).rsplit("/",1)[0]+"/"
 else:
     outputPath = ""
-
 inputfileSp = inputfile.rsplit(".",1)
 inputfilePrefix = inputfileSp[0]
 inputfileSuffixU = inputfileSp[-1].upper()
@@ -84,7 +89,7 @@ inputfileSuffix = inputfileSp[-1]
 PatDistCutoff = args.patdist.upper()
 TreeSupport = args.support.upper()
 genotypeCutoff = args.genotype
-IntraFile = 'Intrahost.txt'
+IntraFile = args.intra
 
 if args.analysis == "C":
     
@@ -96,6 +101,9 @@ if args.analysis == "C":
         flag = 1
     if not args.outlier is True:
         print "For consensus sequencing, outlier removal is not possible using this approach"
+        flag = 1
+    if args.intra is True:
+        print "For consensus sequencing, intrahost information is not used..."
         flag = 1
     try:
         if isinstance( int(args.patdist), int ) == True:
@@ -113,7 +121,6 @@ if args.analysis == "C":
         sys.exit(1)
         flag = 0
 elif args.analysis == "DS":
-    print inputfilePrefix+'.IntraGenotype.patdistspectrum.txt'
     if args.len is True:
         print "For deep sequencing, identifier information is required, see help (-h)"
         flag = 1
@@ -147,6 +154,12 @@ if __name__ == '__main__':
             
         if not os.path.isfile(outputPath+inputfilePrefix+".newick"):
             print "Detected FASTA file, constructing newick tree with FastTree..."
+            if not os.path.isfile(args.infile):
+                print "WARNING: Input file not found"
+                sys.exit(1)
+            if not args.pathway:
+                print "WARNING: If phylogenetic tree is needed, please provide the pathway to FastTree (ex: -path ../../)"
+                sys.exit(1)
             if str(args.pathway[-1]) != "/":
                 args.pathway = str(args.pathway)+"/"
             if os.path.isfile(args.pathway+"FastTree"):
@@ -154,14 +167,15 @@ if __name__ == '__main__':
                     FastTreePathway=args.pathway
                     run_FastTree(FastTreePathway,args.infile,outputPath+inputfilePrefix+".newick")
                 else:
-                    print "Input file not found. Please provide the correct file pathway to the input fasta / newick file"
+                    print "WARNING: Input file not found. Please provide the correct file pathway to the input fasta / newick file"
                     sys.exit(1)
                     
             else:
-                print "Please provide the correct file pathway to locate FastTree, or enter '' if not needed (ex: -path ../../)"
+                print "WARNING: Please provide the correct file pathway to locate FastTree, or enter '' if not needed (ex: -path ../../)"
                 sys.exit(1)
         else:
             print "Phylogenetic tree already completed for this file...."
+            
             
                 
         if args.analysis == "C" or args.analysis == "CONSENSUS":
@@ -173,12 +187,15 @@ if __name__ == '__main__':
                 else:
                     print "Analysis already completed for this file...."
             else:
-                print "Input file not found. Please provide the correct file pathway to the input fasta / newick file"
+                print "WARNING: Input file not found. Please provide the correct file pathway to the input fasta / newick file"
                 sys.exit(1)
         elif args.analysis == "DS" or args.analysis == "DEEP SEQUENCING":
             idLen = args.len
             idStart = args.start
-            try:
+            if args.intra:
+                IntraFile = args.intra
+            
+            if os.path.isfile(inputfilePrefix+".newick"):
                 idLen = args.len
                 idStart = args.start
                 PatDistOutput = inputfilePrefix+".IntraGenotype.PatDist.txt"
@@ -186,9 +203,18 @@ if __name__ == '__main__':
                 TreeFile = inputfilePrefix+".newick"
                 outlierFlag = args.outlier
                 outfile = args.output
-            except:
-                cmdError = "python IntraClust.py -h"
-                os.system(cmdError)
+                
+            elif os.path.isfile(outputPath+inputfilePrefix+".newick"):
+                
+                idLen = args.len
+                idStart = args.start
+                PatDistOutput = inputfilePrefix+".IntraGenotype.PatDist.txt"
+                FastaFile = filePath+inputfilePrefix+"."+inputfileSuffix
+                TreeFile = outputPath+inputfilePrefix+".newick"
+                outlierFlag = args.outlier
+                outfile = args.output
+            else:
+                print "WARNING: Required files were not located"
                 sys.exit(1)
             
             try:
@@ -204,7 +230,6 @@ if __name__ == '__main__':
             try:
                 
                 if not os.path.isfile(output):
-                    print output
                     run_ETE(inputfilePrefix+'.IntraGenotype.patdistspectrum.txt')
                 else:
                     print "Cluster analysis already completed for this file...."
@@ -217,12 +242,11 @@ if __name__ == '__main__':
                 sys.exit(1)
     elif inputfileSuffixU == "NEWICK" or inputfileSuffixU == "NWK" or inputfileSuffixU == "TREE" or inputfileSuffixU == "NW":
         print "Detected a newick phylogenetic tree, proceeding to cluster identification..."
-        
         if args.analysis == "C" or args.analysis == "CONSENSUS":
             try:
                 
                 if not os.path.isfile(output):
-                    run_ConsensusClusterIdentifier(outputPath+args.infile)
+                    run_ConsensusClusterIdentifier(args.infile)
                 else:
                     print "Cluster analysis already completed for this file...."
             except KeyboardInterrupt:
@@ -235,33 +259,46 @@ if __name__ == '__main__':
                 os.system(cmdError)
                 sys.exit(1)
         elif args.analysis == "DS" or analysis == "DEEP SEQUENCING":
-            try:
+            
+            if args.intra:
+                IntraFile = args.intra
+            
+            if os.path.isfile(inputfilePrefix+"."+inputfileSuffix):
                 idLen = args.len
                 idStart = args.start
                 PatDistOutput = inputfilePrefix+".IntraGenotype.PatDist.txt"
-                IntraFile = 'Intrahost.txt'
                 TreeFile = inputfilePrefix+"."+inputfileSuffix
                 FastaFile = inputfilePrefix+".fasta"
                 outlierFlag = args.outlier
+                IntraFile = args.intra
                 outfile = args.output
-            except:
-                cmdError = "python IntraClust.py -h"
-                os.system(cmdError)
+            elif os.path.isfile(filePath+inputfilePrefix+"."+inputfileSuffix):
+                idLen = args.len
+                idStart = args.start
+                PatDistOutput = inputfilePrefix+".IntraGenotype.PatDist.txt"
+                TreeFile = filePath+inputfilePrefix+"."+inputfileSuffix
+                FastaFile = inputfilePrefix+".fasta"
+                outlierFlag = args.outlier
+                IntraFile = args.intra
+                outfile = args.output
+            else:
+                print "WARNING: Required files were not located"
                 sys.exit(1)
-            try:
-                if not os.path.isfile(outputPath+inputfilePrefix+'.IntraGenotype.patdistspectrum.txt'):
+            
+            
+            if not os.path.isfile(outputPath+inputfilePrefix+'.IntraGenotype.patdistspectrum.txt'):
+                print filePath+TreeFile
+                if os.path.isfile(filePath+TreeFile):
                     run_PatDistSpectrum(outputPath+inputfilePrefix+".IntraGenotype.PatDist.txt")
-                if not os.path.isfile(output):
-                    run_ETE(inputfilePrefix+'.IntraGenotype.patdistspectrum.txt')
                 else:
-                    print "Cluster analysis already completed for this file...."
-                
-                
-            except IndexError:
-                print "If you generated your own phylogenetic tree, please ensure that the FASTA file and the tree filenames only differ by their file extensions...."
-                sys.exit(1)
+                    print "WARNING: Input file could not be located..."
+                    sys.exit(1)
+            if not os.path.isfile(output):
+                run_ETE(inputfilePrefix+'.IntraGenotype.patdistspectrum.txt')
+            else:
+                print "Cluster analysis already completed for this file...."
     else:
-        print "A fasta file (ending in '.fasta', '.fa', or '.fas') or a newick tree file (ending in '.newick, '.tree', or '.nw') is required..."
+        print "WARNING: A fasta file (ending in '.fasta', '.fa', or '.fas') or a newick tree file (ending in '.newick, '.tree', or '.nw') is required..."
     current2 = datetime.datetime.now()
     TimeStampFin = current2.strftime("%Y-%m-%d-%H:%M")
     logfile.write("Analysis completed at:"+ TimeStampFin+"\n")

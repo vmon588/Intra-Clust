@@ -7,38 +7,6 @@ import dendropy
 from dendropy.calculate import treemeasure
 
 
-#Ensure all of the required components were retrieved prior to running program
-try:
-    output = sys.argv[1]
-    if "/" in str(output):
-        outputPath = str(sys.argv[1]).rsplit("/",1)[0]+"/"
-    else:
-        outputPath = ""
-    TreeFile = sys.argv[2]
-    if "/" in str(TreeFile):
-        TreeFileSh = str(TreeFile).rsplit("/",1)[1]
-        filePath = str(sys.argv[2]).rsplit("/",1)[0]+"/"
-    else:
-        TreeFileSh = str(TreeFile)
-        filePath = ""
-    infileSp = str(TreeFileSh).rsplit(".",1)
-    infilePrefix = infileSp[0]
-    PatDistOutput = outputPath+infilePrefix+".IntraGenotype.PatDist.txt"
-    cutoff = float(sys.argv[3])
-    length = int(sys.argv[4])
-    start = int(sys.argv[5])-1
-except KeyboardInterrupt:
-    try:
-        os.remove(PatDistOutput)
-    except:
-        pass
-except:
-    print "Usage: python PatDistSpectrum.py infile idLen idStart"
-    print "infile: Tree file"
-    print "idLen: Number of characters for unique identifier"
-    print "idStart: Starting location of unique identifier"
-    sys.exit(1)
-
 #Generate pairwise pat distances for all variants below the specified threshold 
 def dendro(infile, dendroOut):
             PatDistOutput = open(dendroOut,'w')
@@ -105,11 +73,47 @@ def Spectrum():
             Percentiles[k]=[]
         Percentiles[k].extend([Q0,Q1,Q5,Q10,Q20,Q25,Q30,Q35,Q40,Q45,Q50,Q75,Q90,Q99,Q100])
     return Percentiles
-                
+
+#Ensure all of the required files and settings were input correctly
+if os.path.isfile(sys.argv[1]):
+    
+    
+    TreeFile = sys.argv[1]
+    if "/" in str(TreeFile):
+        TreeFileSh = str(TreeFile).rsplit("/",1)[1]
+        filePath = str(sys.argv[2]).rsplit("/",1)[0]+"/"
+    else:
+        TreeFileSh = str(TreeFile)
+        filePath = ""
+    infileSp = str(TreeFileSh).rsplit(".",1)
+    infilePrefix = infileSp[0]
+    
+    cutoff = float(sys.argv[2])
+    length = int(sys.argv[3])
+    start = int(sys.argv[4])-1
+    output = sys.argv[5]
+    if "/" in str(output):
+        outputPath = str(sys.argv[5]).rsplit("/",1)[0]+"/"
+    else:
+        outputPath = ""
+    PatDistOutput = outputPath+infilePrefix+".IntraGenotype.PatDist.txt"
+
+else:
+    print "Usage: python PatDistSpectrum.py infile idLen idStart output"
+    print "infile: Tree file"
+    print "idLen: Number of characters for unique identifier"
+    print "idStart: Starting location of unique identifier"
+    print "output: output file location"
+    sys.exit(1)
+    
 if __name__ == '__main__':
     
     if not os.path.isfile(PatDistOutput):
-        dendro(TreeFile,PatDistOutput)
+        if os.path.isfile(TreeFile):
+            dendro(TreeFile,PatDistOutput)
+        else:
+            "WARNING: Cannot locate input tree file"
+            sys.exit(1)
     else:
         print "Pairwise patristic distances extracted already, calculating percentiles..."
     dictInterPatDist={}
