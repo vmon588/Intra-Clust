@@ -2,83 +2,85 @@ Cluster Identification
 ======================
 
 Move into the scripts directory and run IntraClust.py as specified below.
-Ex: For an input fasta filename of "test.fasta" in the seqfiles directory, using a patristic distance threshold of 0.03 and a tree support of 0.9:
-python IntraClust.py -i ../seqfiles/test.fasta -a C -t1 0.03 -t2 0.9 -o ../results/clusterResults.txt -path ../Documents/
+Ex: For an input fasta filename of "test.fasta" in the seqfiles directory:
+python IntraClust.py -i ../seqfiles/test.fasta -a DS -t1 50 -t2 0.7 -idS 1 -idL 3 -intra Intrahost.txt -path ../Documents/ -oR F -o ../results/clusterResults.txt 
 Deep sequencing Cluster Identification:
-    Fasta file input
-        1A) Reads must be unique.  Freeware to generate collapsed reads can be found here:
-        FASTQ/A Collapser
-        http://hannonlab.cshl.edu/fastx_toolkit/
-        Enter this file as:
-        -i inputFile.fasta
-        (extensions .fasta, .fas, or .fa are required)
-        2A) The resulting file also has to have a unique identifier in each read that is specific to each sample/individual.
+    
+        1A) Input file: Either a Fasta or Newick tree file is required as input
+            Fasta file: 
+                Reads must be unique.  Freeware to generate collapsed reads can be found here:
+                FASTQ/A Collapser
+                http://hannonlab.cshl.edu/fastx_toolkit/
+                Enter this file as:
+                -i inputFile.fasta
+                (extensions required: .fasta, .fas, or .fa are required)
+            Newick file:
+                -i inputFile.newick
+                (extensions required: .newick, .tree, .nw, or .nwk)
+        2A) -a flag 
+                specifies the type of analysis, DS = deep sequencing, and C = consensus (Sanger) sequencing
+        3A) -t1 , -t2
+            Threshold flags: Here the 50th percentile patristic distance threshold and a tree support threshold of 0.7 are used
+        4A) -idL # -idS #
+            The resulting file has to have a unique identifier in each read that is specific to each sample/individual.
             You need to enter the length of this identifier and where it starts within the unique identifier for each fasta read.
-            Enter this information as:
-            -idL # -idS #
             where -idL specifies the length and -idS specifies the starting location.
             Ex: all reads for individual A are labelled with A01 identifier
             >A01.1.1
             ACGTACGT
-            -idS 1, -idL 3
-        3A) If intrahost sequence data is available (multiple samples collected from the same individual), then this needs to be put into 'Intrahost.txt'
-            This file is used to assist the ete.DeepSequencingClusterID.py program, or specifically, to assist in the identification and removal of polyphyletic clusters.
-            The unique identifiers for these samples are also required here (ex UID1, UID2 etc).
-            This simple file format is as follows:
-            UID1,UID2
-            UID3,UID4
-            where UID1 and UID2 are part of a single sequential set, and UID3 / UID4 are part of another.
-        4A) If you prefer to use FastTree for phylogenetic tree reconstruction, you must provide the file pathway to locate FastTree
+            -idS 1 -idL 3
+        5A) If intrahost sequence data is available (multiple samples collected from the same individual), then the -intra command                specifies the filename/location
+            This file is used to assist the ete.DeepSequencingClusterID.py program to assist in the identification and removal of                 polyphyletic clusters.
+            The unique identifiers for these samples are also required here (ex A01, A02 etc).
+            This file format is as follows:
+            A01,A02
+            B01,B03
+            where A01 and A02 are part of a single sequential set, and B01 / B03 are part of another.
+        6A) -p
+            If you prefer to use FastTree for phylogenetic tree reconstruction, you must provide the file pathway to locate FastTree
             Enter this information as:
             -p ../Documents/
-            (NOT -p ../Documents/FastTree)
-        
-
-    Newick File Input
-        1B) If a tree is already provided, a fasta file with the same file name other than the file extension, must also be provided in the same directory as the newick file.
-        The fasta file does not need to be specified on the command line.
-        2B) Sections 2A-4A are also required
-        Enter this file as:
-        -i inputFile.newick
-        (extension is required to be either .newick, .tree, .nw, or .nwk)
-    Output
-    	-o specifies the output directory and filename.  
-        Four or five files will be written to this directory: 
-        	(1) the tree if specified (..newick)
-        	(2) the pairwise patristic distances (..IntraGenotype.PatDist.txt)
-        	(3) Patristic distance percentiles (..IntraGenotype.patdistspectrum.txt)
-        	(4) outlier file (..IntraGenotype.Outliers.txt)
-        	(5) Cluster results, which the user specifies (ex -o ../Documents/ClusterOutput.txt)
+        7A) -oR
+            By default outliers are removed based on their relative position with the parental tree cluster
+            This option can be removed with '-oR F'
+        8A) -o
+        	This specifies the output directory and filename.  
+            Depending on your command line options, files will be written to this directory: 
+            	(1) the tree if specified (..newick)
+            	(2) the pairwise patristic distances (..IntraGenotype.PatDist.txt)
+            	(3) Patristic distance percentiles (..IntraGenotype.patdistspectrum.txt)
+            	(4) outlier file (..IntraGenotype.Outliers.txt)
+            	(5) Cluster results, which the user specifies (ex -o ../Documents/ClusterOutput.txt)
       
 For Consensus/Sanger Sequencing:
-    Fasta file input:
-        1C) All sequences must have unique names
+    Ex: For an input fasta filename of "test.fasta" in the seqfiles directory:
+    python IntraClust.py -i ../seqfiles/test.fasta -a C -t1 0.03 -t2 0.7 -path ../Documents/ -o ../results/clusterResults.txt
+    
+    1B) Input file: Either a Fasta or Newick tree file input is required
+        All sequences must have unique names
         Enter this file as:
         -i inputFile.fasta
-        2C) If you prefer to use FastTree for phylogenetic tree reconstruction, you must provide the file pathway to locate FastTree
-                Enter this information as:
-                -p ../Documents/ (always ending in a forward slash)
-    Newick File Input
-        1D) If a tree is already provided, a fasta file with the same file name other than the file extension, must also be provided in the same directory.
-        The fasta file does not need to be specified on the command line.
-        2D) Section 1C is also required
-        Enter this file as:
-        -i inputFile.newick
-    Output
-    	-o specifies the output directory and filename.
+        Same restrictions in filenames apply as above
+    2B) -a
+        analysis flag, C option specifies consensus sequencing
+    3B) -t1, -t2
+        Threshold flags: Here , a patristic distance threshold of 0.03 and a tree support threshold of 0.7 are used
+    4B) If you prefer to use FastTree for phylogenetic tree reconstruction, you must provide the file pathway to locate FastTree
+        Enter this information as:
+        -p ../Documents/ (always ending in a forward slash)
+    5B) -o
+        Specifies the output directory and filename.
     	Two to Three files will be generated:
     		(1) the tree if required (..newick)
     		(2) the pairwise patristic distances (..PatDist.txt)
     		(3) Cluster results, which the user specifies (ex -o ../Documents/ClusterOutput.txt)
-    		
-        
         
 To get this information, type:
 python IntraClust.py -h
 
 usage: IntraClust.py [-h] -i infile -t1 threshold -t2 threshold
-                        [-t3 threshold] -a analysis [-path path]
-                        [-idS [start]] [-idL [len]] [-oR [outlier]] -o output
+                     [-t3 threshold] -a analysis [-path path] [-idS [start]]
+                     [-idL [len]] [-oR [outlier]] -o output [-intra [intra]]
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -114,6 +116,9 @@ optional arguments:
                         default (ex '-oR T' )
   -o output, --output output
                         Required: this specifies the output filename location
+  -intra [intra], --intrahostInfo [intra]
+                        Optional for deep seq analysis if Intrahost
+                        information is available (ex '-intra FILENAME')
 
         
         
