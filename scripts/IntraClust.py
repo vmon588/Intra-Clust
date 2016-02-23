@@ -287,8 +287,7 @@ if __name__ == '__main__':
             
             
             if not os.path.isfile(outputPath+inputfilePrefix+'.IntraGenotype.patdistspectrum.txt'):
-                print filePath+TreeFile
-                if os.path.isfile(filePath+TreeFile):
+                if os.path.isfile(TreeFile):
                     run_PatDistSpectrum(outputPath+inputfilePrefix+".IntraGenotype.PatDist.txt")
                 else:
                     print "WARNING: Input file could not be located..."
