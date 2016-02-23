@@ -270,8 +270,7 @@ class ClusterIdentification(object):
     def CheckMono(self,ncomb,PhyloVarRemoval,Rejects,monoFinal):
         monoResult = str(self.t.check_monophyly(values=PhyloVarRemoval, ignore_missing=True,target_attr="name"))
         monoResultSp = monoResult.split(",")
-        mR = monoResultSp[1].replace("'","").replace(")","").replace(" ","")                                   
-        #print monoResult
+        mR = monoResultSp[1].replace("'","").replace(")","").replace(" ","")
         if 'monophyletic' in mR:
             if not ncomb in monoFinal:
                 monoFinal[ncomb]=[]
