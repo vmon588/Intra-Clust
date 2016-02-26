@@ -296,9 +296,8 @@ class ClusterIdentification(object):
     def variantAnalysis(self):
         monoFinal = {}
         self.variantCollection()
-        if outlierFlag == "TRUE":
-                OutlierFile = open(outputPath+TreeShort+"."+percentile+"."+supportInput+".Outlier.txt",'w')
-            
+        if outlierFlag == "TRUE" :
+            OutlierFile = open(outputPath+TreeShort+"."+percentile+"."+supportInput+".Outlier.txt",'w')
         try:
             self.intraComb(IntraFile)
         except:
@@ -415,6 +414,8 @@ TreeFile = sys.argv[6]
 idLen = int(sys.argv[7])
 idStart = int(sys.argv[8])-1
 outlierFlag = sys.argv[9].upper()
+if outlierFlag == "T":
+    outlierFlag = "TRUE"
 output = sys.argv[10]
 
 if "/" in output:
