@@ -1,5 +1,5 @@
-from ete2 import PhyloTree
-from ete2 import Tree
+from ete3 import PhyloTree
+from ete3 import Tree
 import dendropy
 from dendropy.calculate import treemeasure
 import sys
@@ -52,7 +52,6 @@ class SangerTreeParsing(object):
                             pdlist = []
                             idSp = t1.label.split(" ")
                             if idSp >1:
-                                #print t1.label
                                 pdlist.append(t1.label.replace(" ","_"))
                                 pdlist.append(t2.label.replace(" ","_"))
                                 PatDist.append(pdlist)
@@ -138,11 +137,6 @@ class SangerTreeParsing(object):
             for i in v:
                 if not i in ItemNumber:
                     ItemNumber.append(i)
-        #print ItemNumber
-        #print "The number samples that clustered is " +"\t"+str(len(ItemNumber))
-        #print "The number of clusters is "+"\t"+str(len(self.dictClusters))
-        #print "The smallest cluster size is " +"\t"+str(sorted(ValLengths)[0])
-        #print "The largest cluster size is " +"\t"+str(sorted(ValLengths)[-1])
         ValLengths[:]=[]
         self.Clusters = []
         for k,v in self.dictClusters.iteritems():
@@ -163,26 +157,24 @@ class SangerTreeParsing(object):
             for i in clusterRaw:
                 if not i in cluster:
                     cluster.append(i)
-            monoResult = str(t.check_monophyly(values=cluster, ignore_missing=True,target_attr="name"))
+            monoResult = str(t.check_monophyly(values=cluster, ignore_missing=True,target_attr="name",unrooted=True))
             #Identify poly- , para-, and monophyletic relationships for clusters
             if 'monophyletic' in monoResult:
                 for pair in itertools.combinations(cluster,2):
                     m = list(pair)
-                    #combM = str(m).replace("', '",",").replace("[","").replace("]","").replace("'","")
                     if not m in self.monoPairs:
                         self.monoPairs.append(m)
                     
             elif 'paraphyletic' in monoResult:
                 for pair in itertools.combinations(cluster,2):
                     m = list(pair)
-                    #combM = str(m).replace("', '",",").replace("[","").replace("]","").replace("'","")
                     if not m in self.monoPairs:
                         self.monoPairs.append(m)
             else:
                 cluster2 = []
                 for pair in itertools.combinations(cluster,2):
                     n = list(pair)  
-                    monoResult = str(t.check_monophyly(values=n, ignore_missing=True,target_attr="name"))
+                    monoResult = str(t.check_monophyly(values=n, ignore_missing=True,target_attr="name",unrooted=True))
                     if not 'polyphyletic' in monoResult:
                         if not n in cluster:
                             cluster.append(n)
@@ -218,7 +210,7 @@ class SangerTreeParsing(object):
                                 cluster2.append(pairL[0])
                             if not pairL[1] in cluster2:
                                 cluster2.append(pairL[1])
-                        monoResult = str(t.check_monophyly(values=cluster2, ignore_missing=True,target_attr="name"))
+                        monoResult = str(t.check_monophyly(values=cluster2, ignore_missing=True,target_attr="name",unrooted=True))
                         if not 'polyphyletic' in monoResult:
                             x+=1
                             if not cluster2 in cluster:
