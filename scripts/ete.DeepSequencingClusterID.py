@@ -1,6 +1,6 @@
 import sys
 import itertools
-from ete2 import Tree
+from ete3 import Tree
 import dendropy
 from dendropy.calculate import treemeasure
 import os
@@ -164,10 +164,9 @@ class ClusterIdentification(object):
                     for pair in itertools.combinations(linesp,2):
                         
                         for item in pair:
-                            #if not item in SerialDict.keys():
-                                if i != item:
-                                    if not item in self.SerialNodes[i]:
-                                        self.SerialNodes[i].append(item)
+                            if i != item:
+                                if not item in self.SerialNodes[i]:
+                                    self.SerialNodes[i].append(item)
         
         return self.SerialNodes
     
@@ -256,19 +255,10 @@ class ClusterIdentification(object):
         for i in ancestor:
             ancestors.append(i.name)
         return ancestors
-    
-    #Prepare a list of lists for parsing       
-    def NodeParser(self,nodes):
-        listitem = []
-        vsp = str(nodes).replace("[['","").replace("']]","").replace("['","").replace("']","").replace('"','').split("', '")
-        for i in vsp:
-            listitem.append(i)
-        
-        return listitem
         
     #Identify poly- , para-, and monophyletic pairs of variants
     def CheckMono(self,ncomb,PhyloVarRemoval,Rejects,monoFinal):
-        monoResult = str(self.t.check_monophyly(values=PhyloVarRemoval, ignore_missing=True,target_attr="name"))
+        monoResult = str(self.t.check_monophyly(values=PhyloVarRemoval, ignore_missing=True,target_attr="name",unrooted=True))
         monoResultSp = monoResult.split(",")
         mR = monoResultSp[1].replace("'","").replace(")","").replace(" ","")
         if 'monophyletic' in mR:
@@ -311,7 +301,7 @@ class ClusterIdentification(object):
                 ksp = k.split("__")
                 krev = ksp[1]+"__"+ksp[0]
                 FinalList = []
-                clusters = self.NodeParser(self.dictSharedReads[k])
+                clusters = self.dictSharedReads[k]
                 
                                     
                 for pair in itertools.combinations(clusters,2):
